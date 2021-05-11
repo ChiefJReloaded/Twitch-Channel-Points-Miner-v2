@@ -32,6 +32,7 @@ from TwitchChannelPointsMiner.utils import (
 
 logger = logging.getLogger(__name__)
 
+max_streams = 5
 
 class Twitch(object):
     __slots__ = ["cookies_file", "user_agent", "twitch_login", "running"]
@@ -261,13 +262,13 @@ class Twitch(object):
 
                 streamers_watching = []
                 for prior in priority:
-                    if prior == Priority.ORDER and len(streamers_watching) < 2:
+                    if prior == Priority.ORDER and len(streamers_watching) < max_streams:
                         # Get the first 2 items, they are already in order
-                        streamers_watching += streamers_index[:2]
+                        streamers_watching += streamers_index[:max_streams]
 
                     elif (
                         prior in [Priority.POINTS_ASCENDING, Priority.POINTS_DESCEDING]
-                        and len(streamers_watching) < 2
+                        and len(streamers_watching) < max_streams
                     ):
                         items = [
                             {"points": streamers[index].channel_points, "index": index}
@@ -280,9 +281,9 @@ class Twitch(object):
                                 True if prior == Priority.POINTS_DESCEDING else False
                             ),
                         )
-                        streamers_watching += [item["index"] for item in items][:2]
+                        streamers_watching += [item["index"] for item in items][:max_streams]
 
-                    elif prior == Priority.STREAK and len(streamers_watching) < 2:
+                    elif prior == Priority.STREAK and len(streamers_watching) < max_streams:
                         """
                         Check if we need need to change priority based on watch streak
                         Viewers receive points for returning for x consecutive streams.
@@ -304,21 +305,21 @@ class Twitch(object):
                                 and streamers[index].stream.minute_watched < 7
                             ):
                                 streamers_watching.append(index)
-                                if len(streamers_watching) == 2:
+                                if len(streamers_watching) == max_streams:
                                     break
 
-                    elif prior == Priority.DROPS and len(streamers_watching) < 2:
+                    elif prior == Priority.DROPS and len(streamers_watching) < max_streams:
                         for index in streamers_index:
                             if streamers[index].drops_condition() is True:
                                 streamers_watching.append(index)
-                                if len(streamers_watching) == 2:
+                                if len(streamers_watching) == max_streams:
                                     break
 
                 """
                 Twitch has a limit - you can't watch more than 2 channels at one time.
                 We take the first two streamers from the list as they have the highest priority (based on order or WatchStreak).
                 """
-                streamers_watching = streamers_watching[:2]
+                streamers_watching = streamers_watching[:max_streams]
 
                 for index in streamers_watching:
                     next_iteration = time.time() + 60 / len(streamers_watching)
