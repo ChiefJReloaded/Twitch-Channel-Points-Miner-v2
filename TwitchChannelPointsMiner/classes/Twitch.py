@@ -32,7 +32,7 @@ from TwitchChannelPointsMiner.utils import (
 
 logger = logging.getLogger(__name__)
 
-max_streams = 5
+max_streams = 2
 
 class Twitch(object):
     __slots__ = ["cookies_file", "user_agent", "twitch_login", "running"]
